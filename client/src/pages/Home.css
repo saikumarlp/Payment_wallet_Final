@@ -1,0 +1,57 @@
+.home-wrapper {
+    background: linear-gradient(135deg, #4e54c8, #8f94fb);
+    min-height: 100vh;
+    padding: 60px 0;
+    color: white;
+  }
+  
+  .welcome-banner {
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+    color: #fffacd;
+  }
+  
+  .home-content {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.8s ease-in-out;
+  }
+  
+  .home-content.fade-in {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  
+  .highlight-text {
+    color: #ffc107;
+  }
+  
+  .features-list {
+    font-size: 1.1rem;
+    list-style-type: none;
+    padding-left: 0;
+  }
+  
+  .features-list li {
+    margin-bottom: 10px;
+  }
+  
+  .img-shadow {
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+  }
+  
+  .cta-button {
+    background-color: #ffc107;
+    color: #000;
+    font-weight: bold;
+    padding: 12px 30px;
+    border-radius: 30px;
+    transition: 0.3s ease-in-out;
+    border: none;
+  }
+  
+  .cta-button:hover {
+    background-color: #ffca2c;
+    transform: scale(1.05);
+  }
+  

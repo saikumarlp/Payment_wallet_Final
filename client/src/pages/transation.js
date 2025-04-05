@@ -1,157 +1,243 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios"; // Ensure you have axios installed for API calls
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import axios from "axios";
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+} from "recharts";
+import {
+  Button, Switch, FormControlLabel, Paper, TextField, Typography,
+  Box, Table, TableBody, TableCell, TableContainer, TableHead,
+  TableRow, Avatar, IconButton
+} from "@mui/material";
+import { styled } from "@mui/system";
+import SendIcon from "@mui/icons-material/Send";
+import QrScanner from "react-webcam-qr-scanner";
+import UploadIcon from "@mui/icons-material/Upload";
+
+const UploadInput = styled("input")({
+  display: "none"
+});
 
 export default function Transaction() {
-    const [user, setUser] = useState(null);
-    const [transactions, setTransactions] = useState([]);
-    const [receiverUpi, setReceiverUpi] = useState('');
-    const [amount, setAmount] = useState('');
-    const [message, setMessage] = useState('');
+  const [user, setUser] = useState(null);
+  const [transactions, setTransactions] = useState([]);
+  const [receiverUpi, setReceiverUpi] = useState("");
+  const [amount, setAmount] = useState("");
+  const [message, setMessage] = useState("");
+  const [darkMode, setDarkMode] = useState(false);
+  const [scanning, setScanning] = useState(false);
+  const [profileImg, setProfileImg] = useState(null);
+  const [sending, setSending] = useState(false);
 
-    // Fetch user data and transactions on component mount
-    useEffect(() => {
-        const fetchUserAndTransactions = async () => {
-            try {
-                const storedUser = JSON.parse(localStorage.getItem('user'));
-                if (storedUser) {
-                    setUser(storedUser);
-                    fetchTransactions(storedUser.upi_id);
-                    fetchBalance(storedUser.upi_id);
-                }
-            } catch (error) {
-                console.error('Error fetching user data:', error);
-            }
-        };
+  useEffect(() => {
+    const storedUser = JSON.parse(localStorage.getItem("user"));
+    if (storedUser) {
+      setUser(storedUser);
+      fetchTransactions(storedUser.upi_id);
+      fetchBalance(storedUser.upi_id);
+    }
+  }, []);
 
-        fetchUserAndTransactions();
-    }, []);
+  const fetchTransactions = async (upi_id) => {
+    try {
+      const res = await axios.get(`/api/transactions/${upi_id}`);
+      setTransactions(res.data);
+    } catch (err) {
+      console.error("Transaction fetch failed:", err);
+    }
+  };
 
-    // Fetch transactions for a given UPI ID
-    const fetchTransactions = async (upi_id) => {
-        try {
-            const response = await axios.get(`/api/transactions/${upi_id}`);
-            setTransactions(response.data);
-        } catch (error) {
-            console.error('Error fetching transactions:', error);
-        }
-    };
+  const fetchBalance = async (upi_id) => {
+    try {
+      const res = await axios.get(`/api/user/${upi_id}`);
+      setUser(res.data);
+    } catch (err) {
+      console.error("Balance fetch failed:", err);
+    }
+  };
 
-    const fetchBalance = async (upi_id) => {
-        try {
-            const response = await axios.get(`/api/user/${upi_id}`);
-            setUser(response.data);
-        } catch (error) {
-            console.error('Error fetching balance:', error);
-        }
-    };
+  const handleTransaction = async () => {
+    if (!receiverUpi || !amount) {
+      setMessage("Please fill in UPI ID and amount.");
+      return;
+    }
+    setSending(true);
+    try {
+      const res = await axios.post("/api/transaction", {
+        sender_upi_id: user.upi_id,
+        receiver_upi_id: receiverUpi,
+        amount: parseFloat(amount)
+      });
+      setMessage(res.data.message);
+      fetchTransactions(user.upi_id);
+      fetchBalance(user.upi_id);
+      setAmount("");
+      setReceiverUpi("");
+    } catch (err) {
+      setMessage("Transaction failed.");
+    } finally {
+      setSending(false);
+    }
+  };
 
-    // Handle transaction
-    const handleTransaction = async () => {
-        if (!amount || !receiverUpi) {
-            setMessage('Please provide amount and receiver UPI ID.');
-            return;
-        }
-        try {
-            const response = await axios.post('/api/transaction', {
-                sender_upi_id: user.upi_id,
-                receiver_upi_id: receiverUpi,
-                amount: parseFloat(amount)
-            });
-            setMessage(response.data.message);
-            if (response.status === 200) {
-                // Refresh transactions and user balance
-                fetchTransactions(user.upi_id);
-                fetchBalance(user.upi_id);
-                setAmount('');
-                setReceiverUpi('');
-            }
-        } catch (error) {
-            console.error('Error making transaction:', error);
-            setMessage('Transaction failed.');
-        }
-    };
+  const chartData = transactions
+    .map((t) => ({
+      timestamp: new Date(t.timestamp).toLocaleDateString(),
+      amount: t.amount
+    }))
+    .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
-    // Prepare data for the chart
-    const chartData = transactions
-        .map(tx => ({
-            timestamp: new Date(tx.timestamp).toLocaleDateString(),
-            amount: tx.amount,
-            type: tx.type // Add type to chart data
-        }))
-        .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)); // Ensure data is sorted by timestamp
+  const handleScan = (result) => {
+    if (result) {
+      setReceiverUpi(result.text);
+      setScanning(false);
+    }
+  };
 
-    return (
-        <div>
-            <div className="m-4">
-                {user && (
-                    <div className="card mt-4">
-                        <div className="card-body">
-                            <h5 className="card-title">User Information</h5>
-                            <p className="card-text"><strong>Email:</strong> {user.email}</p>
-                            <p className="card-text"><strong>UPI ID:</strong> {user.upi_id}</p>
-                            <p className="card-text"><strong>Balance:</strong> {user.balance}</p>
-                        </div>
-                    </div>
-                )}
-            </div>
-            <div className="m-4">
-                <h1>Initiate Transaction</h1>
-                <input
-                    type="text"
-                    placeholder="Receiver UPI ID"
-                    value={receiverUpi}
-                    onChange={(e) => setReceiverUpi(e.target.value)}
-                />
-                <input
-                    type="number"
-                    placeholder="Amount"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                />
-                <button onClick={handleTransaction}>Send Money</button>
-                {message && <p>{message}</p>}
-            </div>
-            <div className="m-4">
-                <h1>Transaction History</h1>
-                <table className="table">
-                    <thead>
-                        <tr>
-                            <th>Symbol</th>
-                            <th>Sender UPI ID</th>
-                            <th>Receiver UPI ID</th>
-                            <th>Amount</th>
-                            <th>Timestamp</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {transactions.map((transaction) => (
-                            <tr key={transaction._id}>
-                                <td>
-                                    {transaction.sender_upi_id === user.upi_id ? '🔺' : '⬇️'}
-                                </td>
-                                <td>{transaction.sender_upi_id}</td>
-                                <td>{transaction.receiver_upi_id}</td>
-                                <td>{transaction.amount}</td>
-                                <td>{new Date(transaction.timestamp).toLocaleString()}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-            <div className="m-4">
-                <h1>Transaction Graph</h1>
-                <ResponsiveContainer width="100%" height={400}>
-                    <LineChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="timestamp" />
-                        <YAxis />
-                        <Tooltip />
-                        <Legend />
-                        <Line type="monotone" dataKey="amount" stroke="#8884d8" dot={false} />
-                    </LineChart>
-                </ResponsiveContainer>
-            </div>
-        </div>
-    );
+  const handleProfileUpload = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      setProfileImg(URL.createObjectURL(file));
+    }
+  };
+
+  const handleError = (err) => {
+    console.error("QR Error:", err);
+  };
+
+  const toggleDarkMode = () => setDarkMode(!darkMode);
+
+  const themeStyles = {
+    backgroundColor: darkMode ? "#121212" : "#f5f5f5",
+    color: darkMode ? "#f5f5f5" : "#121212",
+    padding: "20px",
+    minHeight: "100vh",
+    transition: "all 0.5s ease"
+  };
+
+  return (
+    <Box style={themeStyles}>
+      <FormControlLabel
+        control={<Switch checked={darkMode} onChange={toggleDarkMode} />}
+        label="Dark Mode"
+      />
+
+      {user && (
+        <Paper elevation={4} style={{ padding: 20, marginBottom: 20, transition: "0.5s" }}>
+          <Box display="flex" alignItems="center" gap={2}>
+            <Avatar
+              src={profileImg}
+              alt={user.name}
+              sx={{ width: 64, height: 64 }}
+            />
+            <label htmlFor="upload-profile">
+              <UploadInput
+                accept="image/*"
+                id="upload-profile"
+                type="file"
+                onChange={handleProfileUpload}
+              />
+              <IconButton component="span" color="primary">
+                <UploadIcon />
+              </IconButton>
+            </label>
+            <Box>
+              <Typography variant="h5">{user.name}</Typography>
+              <Typography>Email: {user.email}</Typography>
+              <Typography>UPI: {user.upi_id}</Typography>
+              <Typography><strong>Balance:</strong> ₹{user.balance}</Typography>
+            </Box>
+          </Box>
+        </Paper>
+      )}
+
+      <Typography variant="h6" gutterBottom>Send Money</Typography>
+      <Box display="flex" gap={2} flexWrap="wrap" alignItems="center" mt={1}>
+        <TextField
+          label="Receiver UPI ID"
+          value={receiverUpi}
+          onChange={(e) => setReceiverUpi(e.target.value)}
+          variant="outlined"
+          size="small"
+        />
+        <TextField
+          label="Amount"
+          type="number"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          variant="outlined"
+          size="small"
+        />
+        <Button
+          variant="contained"
+          color="success"
+          endIcon={<SendIcon />}
+          onClick={handleTransaction}
+          disabled={sending}
+        >
+          {sending ? "Sending..." : "Send"}
+        </Button>
+        <Button
+          variant="outlined"
+          color="secondary"
+          onClick={() => setScanning((prev) => !prev)}
+        >
+          {scanning ? "Stop Scanner" : "Scan QR"}
+        </Button>
+      </Box>
+      {message && (
+        <Typography mt={1} color="info.main">{message}</Typography>
+      )}
+
+      {scanning && (
+        <Box mt={2} style={{ maxWidth: 400 }}>
+          <QrScanner
+            delay={300}
+            onScan={handleScan}
+            onError={handleError}
+            style={{ width: "100%" }}
+          />
+        </Box>
+      )}
+
+      <Typography variant="h6" mt={4}>Transaction History</Typography>
+      <TableContainer component={Paper} sx={{ marginTop: 2 }}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Type</TableCell>
+              <TableCell>Sender</TableCell>
+              <TableCell>Receiver</TableCell>
+              <TableCell>Amount</TableCell>
+              <TableCell>Timestamp</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {transactions.map((tx) => (
+              <TableRow key={tx._id}>
+                <TableCell>
+                  {tx.sender_upi_id === user.upi_id ? "🔺 Sent" : "⬇️ Received"}
+                </TableCell>
+                <TableCell>{tx.sender_upi_id}</TableCell>
+                <TableCell>{tx.receiver_upi_id}</TableCell>
+                <TableCell>₹{tx.amount}</TableCell>
+                <TableCell>{new Date(tx.timestamp).toLocaleString()}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      <Typography variant="h6" mt={4}>Transaction Overview</Typography>
+      <ResponsiveContainer width="100%" height={300}>
+        <LineChart data={chartData}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="timestamp" />
+          <YAxis />
+          <Tooltip />
+          <Legend />
+          <Line type="monotone" dataKey="amount" stroke="#1976d2" strokeWidth={2} dot={true} />
+        </LineChart>
+      </ResponsiveContainer>
+    </Box>
+  );
 }

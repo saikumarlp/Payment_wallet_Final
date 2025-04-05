@@ -14,7 +14,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // app.use(express.static(publicDirectory));
 
 
-mongoose.connect('username:password', {
+mongoose.connect('mongodb://localhost:27017/payment', {
   useNewUrlParser: true,
   useUnifiedTopology: true
 })
