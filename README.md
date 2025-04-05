@@ -1,4 +1,6 @@
-# Paytm Wallet Clone
+# Digital Payment Wallet(Paytm Clone) with MERN Technology  
+![image](https://github.com/user-attachments/assets/aeebafaa-0d21-4c70-ada1-e7689698cc2c)
+
 
 This project implements a **digital wallet application**, simulating a basic **Paytm-like wallet system**. The app provides common wallet-related functionalities such as transferring money, adding balance, viewing transaction history, and more. It aims to give users a smooth and interactive experience while managing their virtual wallet.
 
