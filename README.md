@@ -1,5 +1,5 @@
 # Digital Payment Wallet(Paytm Clone) with MERN Technology  
-![image](https://github.com/user-attachments/assets/aeebafaa-0d21-4c70-ada1-e7689698cc2c)
+
 
 
 This project implements a **digital wallet application**, simulating a basic **Paytm-like wallet system**. The app provides common wallet-related functionalities such as transferring money, adding balance, viewing transaction history, and more. It aims to give users a smooth and interactive experience while managing their virtual wallet.
@@ -69,13 +69,13 @@ To set up and run the Paytm Wallet Clone on your local machine, follow these ste
 1. **Clone the Repository:**
 
    ```bash
-   git clone https://github.com/saikumarlp/Paytm_Wallet_Project_Phase1
+   git clone https://github.com/saikumarlp/Paytm_Wallet_Final
    ```
 
 2. **Navigate to the project directory:**
 
    ```bash
-   cd Paytm_Wallet_Project_Phase1
+   cd Paytm_Wallet_week2-main
    ```
 
 3. **Install Dependencies:**
@@ -114,3 +114,5 @@ To set up and run the Paytm Wallet Clone on your local machine, follow these ste
    Visit `http://localhost:3000` to view the app in your browser.
 
 ---
+
+<h2>FeedBack always Accepted</h2>
